@@ -1,0 +1,7 @@
+*
+!*.*
+!Makefile
+!README
+.DS_Store
+.idea
+.vscode
