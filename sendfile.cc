@@ -37,6 +37,8 @@ int main(int argc, char** argv) {
     string delim = ":";
     size_t pStart = 0, pEnd, del_len = delim.length();
     string token;
+
+    // Set Socket
     if ((pEnd = arg[0].find(delim, pStart)) == string::npos) {
         helperMessageSend();
         return 1;
@@ -69,7 +71,14 @@ int main(int argc, char** argv) {
             cerr << "Cannot bind." << endl;
             return 1;
         }
-
-        
     }
+
+    // Set File
+    if (access(arg[1].c_str(), F_OK) == -1) {
+        cerr << "File not exists." << endl;
+        return 1;
+    }
+
+    FILE* f = fopen(arg[1].c_str(), "rb");
+    
 }
