@@ -10,7 +10,7 @@ all:	sendfile recvfile
 sendfile: sendfile.cc
 	$(CC) $(DEFS) $(CFLAGS) $(LIB) -o sendfile sendfile.cc
 
-recvfile: recvfile.c
+recvfile: recvfile.cc
 	$(CC) $(DEFS) $(CFLAGS) $(LIB) -o recvfile recvfile.cc
 
 clean:

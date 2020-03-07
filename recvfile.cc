@@ -52,7 +52,8 @@ int main(int argc, char** argv) {
     buffer = (char *)malloc(BUFFER_SIZE);
     frame = (char *)malloc(MAX_FRAME_SIZE);
     data = (char *)malloc(MAX_DATA_SIZE);
-    if (!buffer || !frame || !data) {
+    fileName = (char *)malloc(100);
+    if (!buffer || !frame || !data || !fileName) {
         cerr << "Memory assign failed." << endl;
         return 1;
     }
@@ -61,15 +62,20 @@ int main(int argc, char** argv) {
     int frameSize;
     bool error;
     int fileNameSize;
+    u_short seq_num;
 
     while (true) {
         socklen_t size;
         fileNameSize = 0;
-        frameSize = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, size);
-        readFilename(frame, &error, fileName, &fileNameSize);
+        frameSize = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, &size);
+        readFilename(frame, &error, fileName, &fileNameSize, &seq_num);
         if (!error && fileNameSize) {
             break;
         }
     }
+    
     // Send Ack for filename;
+    char ack[ACK_SIZE];
+    createAck(seq_num, ack);
+
 }

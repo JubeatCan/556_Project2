@@ -30,8 +30,8 @@ u_short checksum(u_short *buf, int count) {
 void readAck(char* ack, bool* error, int* seq_num) {
     u_short n_seqNo;
     memcpy(ack, &n_seqNo, sizeof(u_short));
-    *seq_num = ntohl(n_seqNo);
-    u_short ck = ntohs(checksum((u_short *)ack, ACK_SIZE - sizeof(u_short)));
+    *seq_num = ntohs(n_seqNo);
+    u_short ck = ntohs(checksum((u_short *)ack, 2));
     u_short* cko = (u_short *)(ack + 2);
     if (ck != *cko) {
         *error = true;
@@ -40,9 +40,10 @@ void readAck(char* ack, bool* error, int* seq_num) {
     }
 }
 
-void readFilename(char* frame, bool* error, char* fileName, int* fileNameSize) {
+void readFilename(char* frame, bool* error, char* fileName, int* fileNameSize, u_short* seqNo) {
     u_short seq_num;
     memcpy(&seq_num, frame, sizeof(u_short));
+    *seqNo = ntohs(seq_num);
     uint32_t size;
     memcpy(&size, frame+2, 4);
     int actual_size = ntohl(size);
@@ -71,8 +72,11 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
     return data_size + 9;
 }
 
-void createAck() {
-
+void createAck(u_short seq_num, char* ack) {
+    u_short nSeq = htons(seq_num);
+    memcpy(ack, &nSeq, 2);
+    u_short ck = htons(checksum((u_short *)ack, 2));
+    memcpy(ack + 2, &ck, 2);
 }
 
 void helperMessageSend() {
