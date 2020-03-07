@@ -13,10 +13,33 @@
 #include <string>
 #include <vector>
 #include <netdb.h>
+#include <memory>
 #include "common.cc"
 
 int socket_fd;
 struct sockaddr_in dest_addr, client_addr;
+
+mutex window_lock;
+mutex fileName_lock;
+
+void listenFilename(bool *filenameFlag) {
+    char ack[ACK_SIZE];
+    int ackSize;
+    bool error;
+    int seq_num;
+    
+    while (true) {
+        socklen_t size;
+        ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_WAITALL, (struct sockaddr *)&dest_addr, &size);
+        readAck(ack, &error, &seq_num);
+
+        fileName_lock.lock();
+        if (!error && seq_num == 2 * WINDOW_LEN) {
+            *filenameFlag = true;
+        }
+        fileName_lock.unlock();
+    }
+}
 
 int main(int argc, char** argv) {
     if (argc != 5) {
@@ -73,12 +96,42 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Set File
+    // Check file.
     if (access(arg[1].c_str(), F_OK) == -1) {
         cerr << "File not exists." << endl;
         return 1;
     }
 
+    // Initialize buffer
     FILE* f = fopen(arg[1].c_str(), "rb");
+    const char* filename = arg[1].c_str();
+    char *buffer, *frame, *data;
+    buffer = (char *)malloc(BUFFER_SIZE);
+    frame = (char *)malloc(MAX_FRAME_SIZE);
+    data = (char *)malloc(MAX_DATA_SIZE);
+    if (!buffer || !frame || !data) {
+        cerr << "Memory assign failed." << endl;
+        return 1;
+    }
+
+    // Send filename first.
+    bool filename_sent = false;
+    thread ackFilename(listenFilename, &filename_sent);
+    bool filename_help = filename_sent;
+    while (!filename_help) {
+        int data_size = arg[1].length() + 1;
+        // Special Seq No.
+        u_short seq_no = 2 * WINDOW_LEN;
+        memcpy(data, filename, data_size);
+        int frame_size = createFrame(true, data, frame, data_size, seq_no);
+        sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
+
+        fileName_lock.lock();
+        filename_help = filename_sent;
+        fileName_lock.unlock();
+    }
+    ackFilename.detach();
+
+    // Send file data.
     
 }

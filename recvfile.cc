@@ -18,6 +18,7 @@
 struct sockaddr_in server_addr, client_addr;
 int socket_fd;
 
+
 int main(int argc, char** argv) {
     if (argc != 3) {
         helperMessageRecv();
@@ -46,4 +47,29 @@ int main(int argc, char** argv) {
         cerr << "Cannot bind socket." << endl;
         return 1;
     }
+
+    char *buffer, *frame, *data, *fileName;
+    buffer = (char *)malloc(BUFFER_SIZE);
+    frame = (char *)malloc(MAX_FRAME_SIZE);
+    data = (char *)malloc(MAX_DATA_SIZE);
+    if (!buffer || !frame || !data) {
+        cerr << "Memory assign failed." << endl;
+        return 1;
+    }
+
+    // Recv filename first
+    int frameSize;
+    bool error;
+    int fileNameSize;
+
+    while (true) {
+        socklen_t size;
+        fileNameSize = 0;
+        frameSize = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, size);
+        readFilename(frame, &error, fileName, &fileNameSize);
+        if (!error && fileNameSize) {
+            break;
+        }
+    }
+    // Send Ack for filename;
 }
