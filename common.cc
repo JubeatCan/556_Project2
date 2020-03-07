@@ -1,3 +1,6 @@
+#ifndef COMMON_CC
+#define COMMON_CC
+
 #include <cstdio>
 #include <iostream>
 #include <vector>
@@ -31,9 +34,10 @@ void readAck(char* ack, bool* error, int* seq_num) {
     u_short n_seqNo;
     memcpy(ack, &n_seqNo, sizeof(u_short));
     *seq_num = ntohs(n_seqNo);
-    u_short ck = ntohs(checksum((u_short *)ack, 2));
-    u_short* cko = (u_short *)(ack + 2);
-    if (ck != *cko) {
+    u_short ck = checksum((u_short *)ack, 2/2);
+    u_short cko;
+    memcpy(ack+2, &cko, 2);
+    if (ck != ntohs(cko)) {
         *error = true;
     } else {
         *error = false;
@@ -47,15 +51,17 @@ void readFilename(char* frame, bool* error, char* fileName, int* fileNameSize, u
     uint32_t size;
     memcpy(&size, frame+2, 4);
     int actual_size = ntohl(size);
-    fileName = (char *)malloc(actual_size);
     memcpy(fileName, frame+7, actual_size);
-    u_short* cko = (u_short * )(frame + 7 + actual_size);
-    if (checksum((u_short *)frame, actual_size + 7) == *cko) {
+    u_short cko;
+    memcpy(&cko, frame + 7 + actual_size, 2);
+    // cout << actual_size << endl;
+    // cout << ntohs(cko) << endl;
+    // cout << checksum((u_short *)frame, (actual_size + 7)/2) << endl << endl;
+    if (checksum((u_short *)frame, (actual_size + 7)/2) == ntohs(cko)) {
         *error = false;
         *fileNameSize = actual_size;
     } else {
         *error = true;
-        delete(fileName);
     }
 }
 
@@ -66,7 +72,9 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
     memcpy(frame + 2, &n_dataSize, 4);
     frame[6] = eof ? 0x0:0x1; // + 4
     memcpy(frame + 7, data, data_size);
-    u_short ck = htons(checksum((u_short *)frame, data_size + 7));
+    u_short ck = htons(checksum((u_short *)frame, (data_size + 7)/2));
+    // cout << ntohs(ck) << endl;
+    // cout << ntohl(n_dataSize) << endl << endl;
     // frame[data_size + 6] = checksum((u_short *)frame, data_size + 6);
     memcpy(frame + data_size + 7, &ck, sizeof(u_short));
     return data_size + 9;
@@ -75,7 +83,7 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
 void createAck(u_short seq_num, char* ack) {
     u_short nSeq = htons(seq_num);
     memcpy(ack, &nSeq, 2);
-    u_short ck = htons(checksum((u_short *)ack, 2));
+    u_short ck = htons(checksum((u_short *)ack, 2/2));
     memcpy(ack + 2, &ck, 2);
 }
 
@@ -127,6 +135,7 @@ bool parseSend(char** argv, vector<string>& arg) {
     } else {
         return false;
     }
-
     return true;
 }
+
+#endif

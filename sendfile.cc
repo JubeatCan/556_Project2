@@ -32,7 +32,7 @@ void listenFilename(bool *filenameFlag) {
         socklen_t size;
         ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_WAITALL, (struct sockaddr *)&dest_addr, &size);
         readAck(ack, &error, &seq_num);
-
+        cout << ackSize << endl;
         fileName_lock.lock();
         if (!error && seq_num == 2 * WINDOW_LEN) {
             *filenameFlag = true;

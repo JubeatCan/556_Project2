@@ -63,19 +63,29 @@ int main(int argc, char** argv) {
     bool error;
     int fileNameSize;
     u_short seq_num;
-
+    socklen_t size;
     while (true) {
-        socklen_t size;
         fileNameSize = 0;
+        cout << "receiving" << endl;
         frameSize = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, &size);
         readFilename(frame, &error, fileName, &fileNameSize, &seq_num);
+        // cout << frameSize << endl;
         if (!error && fileNameSize) {
             break;
         }
     }
-    
+    cout << "Filename done" << endl;
     // Send Ack for filename;
     char ack[ACK_SIZE];
+    cout << seq_num << endl;
     createAck(seq_num, ack);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
+    string fileStr(fileName);
+    fileStr += ".recv";
 }
