@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
     cout << seq_num << endl;
     createAck(seq_num, ack);
     chrono::seconds interval( 1 );
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 5; i++) {
         int s;
         socklen_t l = sizeof(client_addr);
         s = sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
