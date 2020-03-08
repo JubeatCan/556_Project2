@@ -30,14 +30,14 @@ u_short checksum(u_short *buf, int count) {
     return ~(sum & 0xFFFF);
 }
 
-void readAck(char* ack, bool* error, int* seq_num) {
+void readAck(char* ack, bool* error, u_short* seq_num) {
     u_short n_seqNo;
-    memcpy(ack, &n_seqNo, sizeof(u_short));
+    memcpy(&n_seqNo, ack, 2);
     *seq_num = ntohs(n_seqNo);
-    cout << *seq_num << endl;
+    cout << *seq_num << " " << n_seqNo << endl;
     u_short ck = checksum((u_short *)ack, 2/2);
     u_short cko;
-    memcpy(ack+2, &cko, 2);
+    memcpy(&cko, ack+2, 2);
     cout << ck << " " << ntohs(cko) << endl;
     if (ck != ntohs(cko)) {
         *error = true;

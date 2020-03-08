@@ -26,22 +26,19 @@ void listenFilename(bool *filenameFlag) {
     char ack[ACK_SIZE];
     int ackSize;
     bool error;
-    int seq_num;
+    u_short seq_num;
     cout << "listenAck" << endl;
 
     socklen_t size;
-    ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, 0, (struct sockaddr *)&dest_addr, &size);
+    ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_DONTWAIT, (struct sockaddr *)&dest_addr, &size);
     cout << ackSize << endl;
     if (ackSize <= 0) {
         return;
     }
     readAck(ack, &error, &seq_num);
-    cout << seq_num << endl;
-    fileName_lock.lock();
     if (!error && seq_num == 2 * WINDOW_LEN) {
         *filenameFlag = true;
     }
-    fileName_lock.unlock();
 }
 
 int main(int argc, char** argv) {
