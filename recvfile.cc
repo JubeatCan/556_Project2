@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <cstdio>
 #include <cstdlib> 
 #include <unistd.h> 
@@ -95,4 +96,15 @@ int main(int argc, char** argv) {
 
     string fileStr(fileName);
     fileStr += ".recv";
+
+    size_t pos = fileStr.find_last_of("/");
+    if (pos != string::npos) {
+        int status;
+        status = system(("mkdir -p " + fileStr.substr(0, pos)).c_str());
+        if (status == -1) {
+            perror("Cannot create path.");
+        }
+    }
+
+    FILE* f = fopen(fileStr.c_str(), "wb");
 }
