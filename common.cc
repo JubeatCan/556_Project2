@@ -82,6 +82,14 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
     return data_size + 9;
 }
 
+
+bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* eot) {
+    // TODO
+    return true;
+
+}
+
+
 void createAck(u_short seq_num, char* ack) {
     u_short nSeq = htons(seq_num);
     cout << seq_num << endl;
