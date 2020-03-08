@@ -27,18 +27,21 @@ void listenFilename(bool *filenameFlag) {
     int ackSize;
     bool error;
     int seq_num;
-    
-    while (true) {
-        socklen_t size;
-        ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_WAITALL, (struct sockaddr *)&dest_addr, &size);
-        readAck(ack, &error, &seq_num);
-        cout << ackSize << endl;
-        fileName_lock.lock();
-        if (!error && seq_num == 2 * WINDOW_LEN) {
-            *filenameFlag = true;
-        }
-        fileName_lock.unlock();
+    cout << "listenAck" << endl;
+
+    socklen_t size;
+    ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, 0, (struct sockaddr *)&dest_addr, &size);
+    cout << ackSize << endl;
+    if (ackSize <= 0) {
+        return;
     }
+    readAck(ack, &error, &seq_num);
+    cout << seq_num << endl;
+    fileName_lock.lock();
+    if (!error && seq_num == 2 * WINDOW_LEN) {
+        *filenameFlag = true;
+    }
+    fileName_lock.unlock();
 }
 
 int main(int argc, char** argv) {
@@ -116,7 +119,7 @@ int main(int argc, char** argv) {
 
     // Send filename first.
     bool filename_sent = false;
-    thread ackFilename(listenFilename, &filename_sent);
+    // thread ackFilename(listenFilename, &filename_sent);
     bool filename_help = filename_sent;
     while (!filename_help) {
         int data_size = arg[1].length() + 1;
@@ -126,11 +129,10 @@ int main(int argc, char** argv) {
         int frame_size = createFrame(true, data, frame, data_size, seq_no);
         sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
 
-        fileName_lock.lock();
-        filename_help = filename_sent;
-        fileName_lock.unlock();
+        listenFilename(&filename_help);
+        cout << "Send" << endl;
     }
-    ackFilename.detach();
+    // ackFilename.detach();
 
     // Send file data.
     

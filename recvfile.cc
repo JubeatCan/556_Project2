@@ -12,6 +12,7 @@
 #include <thread>
 #include <string>
 #include <vector>
+#include <chrono>
 #include <netdb.h>
 #include "common.cc"
 
@@ -63,7 +64,7 @@ int main(int argc, char** argv) {
     bool error;
     int fileNameSize;
     u_short seq_num;
-    socklen_t size;
+    socklen_t size = sizeof(client_addr);
     while (true) {
         fileNameSize = 0;
         cout << "receiving" << endl;
@@ -79,12 +80,18 @@ int main(int argc, char** argv) {
     char ack[ACK_SIZE];
     cout << seq_num << endl;
     createAck(seq_num, ack);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    chrono::seconds interval( 1 );
+    for (int i = 0; i < 100; i++) {
+        int s;
+        socklen_t l = sizeof(client_addr);
+        s = sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+        this_thread::sleep_for(interval);
+    }
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
     string fileStr(fileName);
     fileStr += ".recv";

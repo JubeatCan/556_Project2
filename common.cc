@@ -34,9 +34,11 @@ void readAck(char* ack, bool* error, int* seq_num) {
     u_short n_seqNo;
     memcpy(ack, &n_seqNo, sizeof(u_short));
     *seq_num = ntohs(n_seqNo);
+    cout << *seq_num << endl;
     u_short ck = checksum((u_short *)ack, 2/2);
     u_short cko;
     memcpy(ack+2, &cko, 2);
+    cout << ck << " " << ntohs(cko) << endl;
     if (ck != ntohs(cko)) {
         *error = true;
     } else {
@@ -82,6 +84,7 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
 
 void createAck(u_short seq_num, char* ack) {
     u_short nSeq = htons(seq_num);
+    cout << seq_num << endl;
     memcpy(ack, &nSeq, 2);
     u_short ck = htons(checksum((u_short *)ack, 2/2));
     memcpy(ack + 2, &ck, 2);
