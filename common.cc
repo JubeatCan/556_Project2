@@ -8,6 +8,7 @@
 #include <thread>
 #include <mutex>
 #include <netinet/in.h>
+#include <sys/time.h>
 
 #define WINDOW_LEN 8
 #define BUFFER_SIZE 1000000
@@ -141,4 +142,11 @@ bool parseSend(char** argv, vector<string>& arg) {
     return true;
 }
 
+
+int timeElapsed(timeval lhs, timeval rhs)
+{
+    return lhs.tv_sec - rhs.tv_sec;
+}
+
 #endif
+
