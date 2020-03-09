@@ -12,10 +12,10 @@
 
 #define WINDOW_LEN 8
 #define SPNUM 2*WINDOW_LEN-1
-#define BUFFER_SIZE 1000/2
+#define BUFFER_SIZE 1024/2
 #define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
 
-#define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(size_t) + 1
+#define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 1
 #define ACK_SIZE sizeof(u_short) + sizeof(u_short)
 
 #define LAST_ACK (next_frame_expected - 1 + 2 * WINDOW_LEN) % (2 * WINDOW_LEN)
@@ -91,6 +91,10 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
 
 bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* eot) {
     // TODO: need to check the frame structure again
+    // for (int i = 0; i< MAX_FRAME_SIZE; i++) {
+    //     cout << frame[i];
+    // }
+    // cout << endl;
 
     u_short seq_num_temp;
     memcpy(&seq_num_temp, frame, sizeof(u_short));
@@ -106,7 +110,7 @@ bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* 
     
     u_short cks_temp;
     memcpy(&cks_temp, frame + 7 + *data_size, 2);
-    cout << "ckm " << ntohs(cks_temp) << " " << checksum((u_short *) frame, (*data_size + 7) / 2) << endl;
+    // cout << "ckm " << ntohs(cks_temp) << " " << checksum((u_short *) frame, (*data_size + 7) / 2) << endl;
     return ntohs(cks_temp) == checksum((u_short *) frame, (*data_size + 7) / 2);
 
 }

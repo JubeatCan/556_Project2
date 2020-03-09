@@ -162,6 +162,10 @@ int main(int argc, char** argv) {
             if (seq_num < WINDOW_LEN) {
                 buffer_shift = seq_num * MAX_DATA_SIZE;
                 memcpy(buffer1 + buffer_shift, data, data_size);
+                // for (int i = 0; i< MAX_DATA_SIZE; i++) {
+                //     cout << (data)[i];
+                // }
+                // cout << endl;
                 recv_count1++;
             }
             else {
