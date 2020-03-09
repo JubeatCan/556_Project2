@@ -275,17 +275,26 @@ int main(int argc, char** argv) {
             if(!sentMaskWindow[i] || timeWindow[i].tv_sec == -1 ||
                 (!ackMaskWindow[i] && timeElapsed(currentTime, timeWindow[i]) > TIMEOUT))
             {
-
                 // calculate seq_no
                 seq_no = isBuffer1Low ? i : (i + WINDOW_LEN);
                 
                 offset = i * MAX_DATA_SIZE;
-                dataSize = (read_bytes - offset < MAX_DATA_SIZE) ? (read_bytes - offset) : MAX_DATA_SIZE;
+                bool eof = false;
+                if(read_bytes - offset < MAX_DATA_SIZE)
+                {
+                    dataSize = read_bytes - offset;
+                    eof = true;
+                }
+                else
+                {
+                    dataSize = MAX_DATA_SIZE;
+                }
+                // dataSize = (read_bytes - offset < MAX_DATA_SIZE) ? (read_bytes - offset) : MAX_DATA_SIZE;
 
                 char* tempBufferPtr = isBuffer1Low ? buffer : buffer2;
                 memcpy(data, tempBufferPtr + offset, dataSize);
                 
-                int frame_size = createFrame(hasReadAll, data, frame, dataSize, seq_no);
+                int frame_size = createFrame(eof, data, frame, dataSize, seq_no);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
                 gettimeofday(&currentTime, NULL);
                 timeWindow[seq_no] = currentTime;
@@ -302,12 +311,21 @@ int main(int argc, char** argv) {
                 seq_no = isBuffer1Low ? (i + WINDOW_LEN) : i;
 
                 offset = i * MAX_DATA_SIZE;
-                dataSize = (read_bytes - offset < MAX_DATA_SIZE) ? (read_bytes - offset) : MAX_DATA_SIZE;
+                bool eof = false;
+                if(read_bytes - offset < MAX_DATA_SIZE)
+                {
+                    dataSize = read_bytes - offset;
+                    eof = true;
+                }
+                else
+                {
+                    dataSize = MAX_DATA_SIZE;
+                }
 
                 char* tempBufferPtr = isBuffer1Low ? buffer2 : buffer;
                 memcpy(data, tempBufferPtr + offset, dataSize);
                 
-                int frame_size = createFrame(hasReadAll, data, frame, dataSize, seq_no);
+                int frame_size = createFrame(eof, data, frame, dataSize, seq_no);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
                 gettimeofday(&currentTime, NULL);
                 timeWindow[seq_no] = currentTime;
