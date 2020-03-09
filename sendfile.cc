@@ -178,10 +178,10 @@ int main(int argc, char** argv) {
     window_lock.unlock();
 
     // TODO: file is small and two buffer has read all.
-    int read_bytes = fread(buffer, 1, BUFFER_SIZE / 2, f);
+    int read_bytes = fread(buffer, 1, BUFFER_SIZE, f);
     // set to the next file location
     fseek(f, 0, SEEK_CUR);
-    fread(buffer2, 1, BUFFER_SIZE / 2, f);
+    fread(buffer2, 1, BUFFER_SIZE, f);
     fseek(f, 0, SEEK_CUR);
     bool isBuffer1Low = true;
 
