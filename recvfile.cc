@@ -141,9 +141,11 @@ int main(int argc, char** argv) {
         // cout << seq_num << " " << idx << endl;
         // if frame has error or not in current recv_window, drop the frame
         // send ack for last one (or do nothing)
+        cout << seq_num << " " << idx << endl;
         if (!frame_error || idx >= WINDOW_LEN) {
             // cout << LAST_ACK << endl;
             createAck(LAST_ACK, ack);
+            cout << LAST_ACK << endl;
             sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
             continue;
         }

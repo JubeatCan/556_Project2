@@ -15,7 +15,7 @@
 #define BUFFER_SIZE 1024/2
 #define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
 
-#define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 1
+#define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 2
 #define ACK_SIZE sizeof(u_short) + sizeof(u_short)
 
 #define LAST_ACK (next_frame_expected - 1 + 2 * WINDOW_LEN) % (2 * WINDOW_LEN)
@@ -80,13 +80,14 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
     memcpy(frame, &n_seqNo, sizeof(u_short)); // + 2
     memcpy(frame + 2, &n_dataSize, 4);
     frame[6] = eof ? 0x0:0x1; // + 4
-    memcpy(frame + 7, data, data_size);
-    u_short ck = htons(checksum((u_short *)frame, (data_size + 7)/2));
+    frame[7] = eof ? 0x0:0x1;
+    memcpy(frame + 8, data, data_size);
+    u_short ck = htons(checksum((u_short *)frame, (data_size + 8)/2));
     // cout << ntohs(ck) << endl;
     // cout << ntohl(n_dataSize) << endl << endl;
     // frame[data_size + 6] = checksum((u_short *)frame, data_size + 6);
-    memcpy(frame + data_size + 7, &ck, sizeof(u_short));
-    return data_size + 9;
+    memcpy(frame + data_size + 8, &ck, sizeof(u_short));
+    return data_size + 10;
 }
 
 bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* eot) {
@@ -106,12 +107,13 @@ bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* 
 
     *eot = frame[6] == 0x0 ? true: false;
 
-    memcpy(data, frame + 7, *data_size);
+
+    memcpy(data, frame + 8, *data_size);
     
     u_short cks_temp;
-    memcpy(&cks_temp, frame + 7 + *data_size, 2);
+    memcpy(&cks_temp, frame + 8 + *data_size, 2);
     // cout << "ckm " << ntohs(cks_temp) << " " << checksum((u_short *) frame, (*data_size + 7) / 2) << endl;
-    return ntohs(cks_temp) == checksum((u_short *) frame, (*data_size + 7) / 2);
+    return ntohs(cks_temp) == checksum((u_short *) frame, (*data_size + 8) / 2);
 
 }
 
