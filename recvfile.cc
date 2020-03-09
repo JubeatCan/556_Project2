@@ -119,6 +119,7 @@ int main(int argc, char** argv) {
     int recv_count2 = 0;    // count how many frame stored in buffer2
 
     u_short next_frame_expected = 0; // seq_no of next frame expected
+    bool recv_done = false;
     bool frame_error;
     bool is_last;
     
@@ -127,10 +128,14 @@ int main(int argc, char** argv) {
         window_recv_mask[i] = false;
     }
     
-    while (true) {
+    while (!recv_done) {
+        bool last_in_window;
+        int remain_to_recv;
+
         frame_size = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, &size);
         frame_error = readFrame(frame, data, &data_size, &seq_num, &is_last);
 
+        // distance btw seq_num and next_frame_expected
         int idx = (seq_num - next_frame_expected + 2 * WINDOW_LEN) % (2 * WINDOW_LEN);
 
         // if frame has error or not in current recv_window, drop the frame
@@ -141,13 +146,25 @@ int main(int argc, char** argv) {
             continue;
         }
 
+        // if it is the last frame, count how many frames need to recv to close the window
+        if (is_last) {
+            last_in_window = true;
+            remain_to_recv = idx + 1; 
+        }
+
+        // mask it as received
+        if (!window_recv_mask[idx]) {
+            window_recv_mask[idx] = true;
+        }
+
         // if seq_no == next frame expected, slide the window
         if (seq_num == next_frame_expected) {
             // calcuate how many window slot shifted
-            int window_shift = 1;
-            for (int i = 1; i < WINDOW_LEN; i++) {
+            int window_shift = 0;
+            for (int i = 0; i < WINDOW_LEN; i++) {
                 if (!window_recv_mask[i]) break;
                 window_shift++;
+                if (last_in_window) remain_to_recv--;
             }
 
             for (int i = 0; i < WINDOW_LEN - window_shift; i++) {
@@ -160,13 +177,16 @@ int main(int argc, char** argv) {
             // reset next_frame_expected
             next_frame_expected = (next_frame_expected + window_shift) % (2 * WINDOW_LEN);
 
-        }
-        // else just mark it received
-        else {
-            if (!window_recv_mask[idx]) {
-                window_recv_mask[idx] = true;
+            if (last_in_window && remain_to_recv == 0) {
+                recv_done = true;
             }
         }
+        // // else just mark it received
+        // else {
+        //     if (!window_recv_mask[idx]) {
+        //         window_recv_mask[idx] = true;
+        //     }
+        // }
 
         // send ack
         createAck(next_frame_expected - 1, ack);
@@ -197,9 +217,27 @@ int main(int argc, char** argv) {
             }
         }
         
-
-        // TODO - deal with last frame
     }
 
+    // write remaining buffer to file
+    if (recv_count1) {
+        fwrite(buffer1, 1, BUFFER_SIZE / 2, file);
+
+    }
+
+    if (recv_count2) {
+        fwrite(buffer2, 1, BUFFER_SIZE / 2, file);
+    }
+
+    fclose(file);
+
+    // keep sending ack to client, tell the recv is done
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+
+    exit(0);
 
 }
