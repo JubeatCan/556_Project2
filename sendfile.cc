@@ -22,7 +22,7 @@ struct sockaddr_in dest_addr, client_addr;
 mutex window_lock;
 mutex fileName_lock;
 
-int low, high;
+int low = 0, high = WINDOW_LEN;
 const int TIMEOUT = 1000;
 bool ackMaskWindow[WINDOW_LEN * 2];
 bool sentMaskWindow[WINDOW_LEN * 2];
@@ -187,6 +187,7 @@ int main(int argc, char** argv) {
 
     bool hasReadAll = false;
     // bool hasSentAll = false;
+    thread ackRecv(listenAck);
     while(true)
     {
         int shift = 0;
@@ -334,9 +335,12 @@ int main(int argc, char** argv) {
         }
         window_lock.unlock();
     }
+    ackRecv.detach();
     fclose(f);
     free(buffer);
     free(buffer2);
     free(frame);
     free(data);
+
+
 }
