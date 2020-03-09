@@ -59,14 +59,14 @@ void readFilename(char* frame, bool* error, char* fileName, int* fileNameSize, u
     memcpy(&size, frame+2, 4);
     int actual_size = ntohl(size);
     
-    memcpy(fileName, frame+7, actual_size);
+    memcpy(fileName, frame+8, actual_size);
     
     u_short cko;
-    memcpy(&cko, frame + 7 + actual_size, 2);
+    memcpy(&cko, frame + 8 + actual_size, 2);
     // cout << actual_size << endl;
     // cout << ntohs(cko) << endl;
     // cout << checksum((u_short *)frame, (actual_size + 7)/2) << endl << endl;
-    if (checksum((u_short *)frame, (actual_size + 7)/2) == ntohs(cko) && *seqNo == SPNUM) {
+    if (checksum((u_short *)frame, (actual_size + 8)/2) == ntohs(cko) && *seqNo == SPNUM) {
         *error = false;
         *fileNameSize = actual_size;
     } else {
