@@ -93,7 +93,7 @@ bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* 
     // TODO: need to check the frame structure again
 
     u_short seq_num_temp;
-    memcpy(&seq_num, frame, sizeof(u_short));
+    memcpy(&seq_num_temp, frame, sizeof(u_short));
     *seq_num = ntohs(seq_num_temp);
 
     uint32_t net_data_size;

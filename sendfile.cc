@@ -60,7 +60,6 @@ void listenAck()
         socklen_t size;
         ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_WAITALL, (struct sockaddr *) &dest_addr, &size);
         readAck(ack, &error, &seq_num);
-
         window_lock.lock();
 
         if(!error && seq_num >= low && seq_num < high)
@@ -159,7 +158,7 @@ int main(int argc, char** argv) {
         sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
 
         listenFilename(&filename_help);
-        // cout << "Send" << endl;
+         cout << "Send filename" << endl;
     }
     cout << "Filename done" << endl;
     // ackFilename.detach();
@@ -297,6 +296,7 @@ int main(int argc, char** argv) {
                 
                 int frame_size = createFrame(eof, data, frame, dataSize, seq_no);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
+                cout << "send data" << endl;
                 gettimeofday(&currentTime, NULL);
                 timeWindow[seq_no] = currentTime;
                 sentMaskWindow[seq_no] = true;
