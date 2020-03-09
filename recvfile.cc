@@ -205,7 +205,10 @@ int main(int argc, char** argv) {
         // if buffer1 is full, write to file, reset buffer1
         cout << "recv_count1: " << recv_count1 << endl;
         if (recv_count1 == WINDOW_LEN) {
-            fwrite(buffer1, 1, BUFFER_SIZE, file);
+            cout << "write file" << endl;
+            cout << fwrite(buffer1, 1, BUFFER_SIZE, file) << endl;
+            fclose(file);
+            file = fopen(fileStr.c_str(), "ab");
             memset(buffer1, 0, BUFFER_SIZE);
             recv_count1 = 0;
         }

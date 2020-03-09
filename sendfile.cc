@@ -60,6 +60,7 @@ void listenAck()
         socklen_t size;
         ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_WAITALL, (struct sockaddr *) &dest_addr, &size);
         readAck(ack, &error, &seq_num);
+        cout << seq_num << endl;
         window_lock.lock();
 
         if(!error && seq_num >= low && seq_num < high)
@@ -205,7 +206,7 @@ int main(int argc, char** argv) {
                 shift++;
             }
         }
-
+        // cout << shift << endl;
         // end the while if all frames has been acked
         if(hasReadAll && shift == WINDOW_LEN)
         {
