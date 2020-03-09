@@ -27,6 +27,7 @@ const int TIMEOUT = 1000;
 bool ackMaskWindow[WINDOW_LEN * 2];
 bool sentMaskWindow[WINDOW_LEN * 2];
 timeval timeWindow[WINDOW_LEN * 2];
+bool isBuffer1Low = true;
 
 void listenFilename(bool *filenameFlag) {
     char ack[ACK_SIZE];
@@ -60,13 +61,33 @@ void listenAck()
         socklen_t size;
         ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_WAITALL, (struct sockaddr *) &dest_addr, &size);
         readAck(ack, &error, &seq_num);
-        cout << seq_num << endl;
+        // cout << seq_num << endl;
         window_lock.lock();
 
-        if(!error && seq_num >= low && seq_num < high)
-        {
-            ackMaskWindow[seq_num] = true;
-        }
+        int seq_no;
+       for (int i = low; i < WINDOW_LEN; i++)
+       {
+           seq_no = isBuffer1Low ? i : (i + WINDOW_LEN);
+           if(!error && seq_num == seq_no)
+           {
+               ackMaskWindow[seq_num] = true;
+           }
+       }
+ 
+       for (int i = 0; i < high; i++)
+       {
+           seq_no = isBuffer1Low ? (i + WINDOW_LEN) : i;
+           if(!error && seq_num == seq_no)
+           {
+               ackMaskWindow[seq_num] = true;
+           }
+       }
+
+
+        // if(!error && seq_num >= low && seq_num < high)
+        // {
+        //     ackMaskWindow[seq_num] = true;
+        // }
 
         window_lock.unlock();
     }
@@ -183,7 +204,6 @@ int main(int argc, char** argv) {
     fseek(f, 0, SEEK_CUR);
     fread(buffer2, 1, BUFFER_SIZE, f);
     fseek(f, 0, SEEK_CUR);
-    bool isBuffer1Low = true;
 
     bool hasReadAll = false;
     // bool hasSentAll = false;
@@ -297,7 +317,7 @@ int main(int argc, char** argv) {
                 
                 int frame_size = createFrame(eof, data, frame, dataSize, seq_no);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
-                cout << "send data" << endl;
+                // cout << "send data" << endl;
                 gettimeofday(&currentTime, NULL);
                 timeWindow[seq_no] = currentTime;
                 sentMaskWindow[seq_no] = true;
