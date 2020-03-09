@@ -110,10 +110,12 @@ int main(int argc, char** argv) {
     }
 
     FILE *file = fopen(fileStr.c_str(), "wb");
+
+    delete(buffer);
     
     /* receive frames until the last one */
-    char * buffer1 = (char *) malloc(BUFFER_SIZE / 2);  // seq_no [0 : WINDOW_LEN - 1] store here
-    char * buffer2 = (char *) malloc(BUFFER_SIZE / 2);  // seq_no [WINDOW_LEN : WINDOW_LEN * 2 - 1] store here
+    char * buffer1 = (char *) malloc(BUFFER_SIZE);  // seq_no [0 : WINDOW_LEN - 1] store here
+    char * buffer2 = (char *) malloc(BUFFER_SIZE);  // seq_no [WINDOW_LEN : WINDOW_LEN * 2 - 1] store here
 
     int recv_count1 = 0;    // count how many frame stored in buffer1
     int recv_count2 = 0;    // count how many frame stored in buffer2

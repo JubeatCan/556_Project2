@@ -11,7 +11,8 @@
 #include <sys/time.h>
 
 #define WINDOW_LEN 8
-#define BUFFER_SIZE 1000000
+#define SPNUM 2*WINDOW_LEN-1
+#define BUFFER_SIZE 1000000/2
 #define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
 
 #define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(size_t) + 1
@@ -63,7 +64,7 @@ void readFilename(char* frame, bool* error, char* fileName, int* fileNameSize, u
     // cout << actual_size << endl;
     // cout << ntohs(cko) << endl;
     // cout << checksum((u_short *)frame, (actual_size + 7)/2) << endl << endl;
-    if (checksum((u_short *)frame, (actual_size + 7)/2) == ntohs(cko)) {
+    if (checksum((u_short *)frame, (actual_size + 7)/2) == ntohs(cko) && *seqNo == SPNUM) {
         *error = false;
         *fileNameSize = actual_size;
     } else {

@@ -42,7 +42,7 @@ void listenFilename(bool *filenameFlag) {
         return;
     }
     readAck(ack, &error, &seq_num);
-    if (!error && seq_num == 2 * WINDOW_LEN) {
+    if (!error && seq_num == SPNUM) {
         *filenameFlag = true;
     }
 }
@@ -137,8 +137,8 @@ int main(int argc, char** argv) {
     FILE* f = fopen(arg[1].c_str(), "rb");
     const char* filename = arg[1].c_str();
     char *buffer, *frame, *data, *buffer2;
-    buffer = (char *)malloc(BUFFER_SIZE / 2);
-    buffer2 = (char *)malloc(BUFFER_SIZE / 2);
+    buffer = (char *)malloc(BUFFER_SIZE);
+    buffer2 = (char *)malloc(BUFFER_SIZE);
     frame = (char *)malloc(MAX_FRAME_SIZE);
     data = (char *)malloc(MAX_DATA_SIZE);
     if (!buffer || !frame || !data) {
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
     while (!filename_help) {
         int data_size = arg[1].length() + 1;
         // Special Seq No.
-        u_short seq_no = 2 * WINDOW_LEN;
+        u_short seq_no = SPNUM;
         memcpy(data, filename, data_size);
         int frame_size = createFrame(true, data, frame, data_size, seq_no);
         sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
