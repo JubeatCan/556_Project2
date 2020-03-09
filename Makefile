@@ -8,10 +8,10 @@ DEFS 	 	=
 all:	clean sendfile recvfile
 
 sendfile: sendfile.cc common.cc
-	$(CC) $(DEFS) $(CFLAGS) $(LIB) sendfile.cc -o sendfile
+	$(CC) $(DEFS) $(CFLAGS) $(LIB) -pthread sendfile.cc -o sendfile
 
 recvfile: recvfile.cc common.cc
-	$(CC) $(DEFS) $(CFLAGS) $(LIB) recvfile.cc -o recvfile
+	$(CC) $(DEFS) $(CFLAGS) $(LIB) -pthread recvfile.cc -o recvfile
 
 clean:
 	rm -f *.o
