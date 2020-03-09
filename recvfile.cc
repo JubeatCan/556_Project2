@@ -52,12 +52,12 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    char *buffer, *frame, *data, *fileName;
-    buffer = (char *)malloc(BUFFER_SIZE);
+    char *frame, *data, *fileName;
     frame = (char *)malloc(MAX_FRAME_SIZE);
     data = (char *)malloc(MAX_DATA_SIZE);
     fileName = (char *)malloc(100);
-    if (!buffer || !frame || !data || !fileName) {
+    
+    if (!frame || !data || !fileName) {
         cerr << "Memory assign failed." << endl;
         return 1;
     }
@@ -111,8 +111,7 @@ int main(int argc, char** argv) {
 
     FILE *file = fopen(fileStr.c_str(), "wb");
 
-    delete(buffer);
-    
+
     /* receive frames until the last one */
     char * buffer1 = (char *) malloc(BUFFER_SIZE);  // seq_no [0 : WINDOW_LEN - 1] store here
     char * buffer2 = (char *) malloc(BUFFER_SIZE);  // seq_no [WINDOW_LEN : WINDOW_LEN * 2 - 1] store here
@@ -154,9 +153,21 @@ int main(int argc, char** argv) {
             remain_to_recv = idx + 1; 
         }
 
-        // mask it as received
+        // mask it as received if not, copy data to corresponding buffer
         if (!window_recv_mask[idx]) {
             window_recv_mask[idx] = true;
+
+            size_t buffer_shift;
+            if (seq_num < WINDOW_LEN) {
+                buffer_shift = seq_num * MAX_DATA_SIZE;
+                memcpy(buffer1 + buffer_shift, data, data_size);
+                recv_count1++;
+            }
+            else {
+                buffer_shift = (seq_num - WINDOW_LEN) * MAX_DATA_SIZE;
+                memcpy(buffer2 + buffer_shift, data, data_size);
+                recv_count2++;
+            }
         }
 
         // if seq_no == next frame expected, slide the window
@@ -176,59 +187,44 @@ int main(int argc, char** argv) {
             for (int i = WINDOW_LEN - window_shift; i < WINDOW_LEN; i++) {
                 window_recv_mask[i] = false;
             }
+            
             // reset next_frame_expected
             next_frame_expected = (next_frame_expected + window_shift) % (2 * WINDOW_LEN);
-
+            
+            // if last frame is in current window, and no more frame need to be received, we are done receive
             if (last_in_window && remain_to_recv == 0) {
                 recv_done = true;
             }
         }
-        // // else just mark it received
-        // else {
-        //     if (!window_recv_mask[idx]) {
-        //         window_recv_mask[idx] = true;
-        //     }
-        // }
 
         // send ack
         createAck(next_frame_expected - 1, ack);
         sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
-        // copy data to corresponding buffer, check whether buffer is full
-        size_t buffer_shift;
-        if (seq_num < WINDOW_LEN) {
-            buffer_shift = seq_num * MAX_DATA_SIZE;
-            memcpy(buffer1 + buffer_shift, data, data_size);
-            
-            // if buffer1 is full, write to file, reset buffer1
-            if (++recv_count1 == WINDOW_LEN) {
-                fwrite(buffer1, 1, BUFFER_SIZE / 2, file);
-                memset(buffer1, 0, BUFFER_SIZE / 2);
-                recv_count1 = 0;
-            }
-        } 
-        else {
-            buffer_shift = (seq_num - WINDOW_LEN) * MAX_DATA_SIZE;
-            memcpy(buffer2 + buffer_shift, data, data_size);
-            
-            // if buffer2 is full, write to file, reset buffer2
-            if (++recv_count2 == WINDOW_LEN) {
-                fwrite(buffer2, 1, BUFFER_SIZE / 2, file);
-                memset(buffer2, 0, BUFFER_SIZE / 2);
-                recv_count2 = 0;
-            }
+        // if buffer1 is full, write to file, reset buffer1
+        if (++recv_count1 == WINDOW_LEN) {
+            fwrite(buffer1, 1, BUFFER_SIZE, file);
+            memset(buffer1, 0, BUFFER_SIZE);
+            recv_count1 = 0;
+        }
+    
+        // if buffer2 is full, write to file, reset buffer2
+        if (++recv_count2 == WINDOW_LEN) {
+            fwrite(buffer2, 1, BUFFER_SIZE, file);
+            memset(buffer2, 0, BUFFER_SIZE);
+            recv_count2 = 0;
         }
         
     }
 
     // write remaining buffer to file
     if (recv_count1) {
-        fwrite(buffer1, 1, BUFFER_SIZE / 2, file);
+        fwrite(buffer1, 1, BUFFER_SIZE, file);
 
     }
-
+    
     if (recv_count2) {
-        fwrite(buffer2, 1, BUFFER_SIZE / 2, file);
+        fwrite(buffer2, 1, BUFFER_SIZE, file);
     }
 
     fclose(file);
