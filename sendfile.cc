@@ -70,18 +70,30 @@ void listenAck()
            seq_no = isBuffer1Low ? i : (i + WINDOW_LEN);
            if(!error && seq_num == seq_no)
            {
-               ackMaskWindow[seq_num] = true;
+               break;
+               // ackMaskWindow[seq_num] = true;
            }
        }
- 
+  
        for (int i = 0; i < high; i++)
        {
            seq_no = isBuffer1Low ? (i + WINDOW_LEN) : i;
            if(!error && seq_num == seq_no)
            {
-               ackMaskWindow[seq_num] = true;
+               break;
+               // ackMaskWindow[seq_num] = true;
            }
        }
+ 
+       if(!error)
+       {
+           int startPos = isBuffer1Low ? low : (low + WINDOW_LEN);
+           for (int i = startPos; i <= seq_num; i++)
+           {
+               ackMaskWindow[i] = true;
+           }
+       }
+
 
 
         // if(!error && seq_num >= low && seq_num < high)
