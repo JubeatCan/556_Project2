@@ -52,7 +52,7 @@ void listenAck()
     char ack[ACK_SIZE];
     bool error;
     int ackSize;
-    int seq_num;
+    u_short seq_num;
 
     // listen ack from reciever
     while(true)
@@ -185,7 +185,8 @@ int main(int argc, char** argv) {
     fseek(f, 0, SEEK_CUR);
     bool isBuffer1Low = true;
 
-    bool hasReadAll = false, hasSentAll = false;
+    bool hasReadAll = false;
+    // bool hasSentAll = false;
     while(true)
     {
         int shift = 0;
@@ -239,7 +240,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                window_lock.unlock;
+                window_lock.unlock();
                 isBuffer1Low = !isBuffer1Low;
                 fseek(f, 0, SEEK_CUR);
 
