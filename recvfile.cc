@@ -236,6 +236,12 @@ int main(int argc, char** argv) {
     sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
     sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
+    free(buffer1);
+    free(buffer2);
+    free(frame);
+    free(data);
+    free(fileName);
+
     exit(0);
 
 }
