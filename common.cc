@@ -18,6 +18,8 @@
 #define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(size_t) + 1
 #define ACK_SIZE sizeof(u_short) + sizeof(u_short)
 
+#define LAST_ACK (next_frame_expected - 1 + 2 * WINDOW_LEN) % (2 * WINDOW_LEN)
+
 using namespace std;
 
 u_short checksum(u_short *buf, int count) {

@@ -92,10 +92,10 @@ int main(int argc, char** argv) {
     //     this_thread::sleep_for(interval);
     // }
     sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
     string fileStr(fileName);
     fileStr += ".recv";
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         // if frame has error or not in current recv_window, drop the frame
         // send ack for last one (or do nothing)
         if (frame_error || idx >= WINDOW_LEN) {
-            createAck(next_frame_expected - 1, ack);
+            createAck(LAST_ACK, ack);
             sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
             continue;
         }
@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
         }
 
         // send ack
-        createAck(next_frame_expected - 1, ack);
+        createAck(LAST_ACK, ack);
         sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
         // if buffer1 is full, write to file, reset buffer1
