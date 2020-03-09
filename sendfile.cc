@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
 
                 if(isBuffer1Low)
                 {
-                    read_bytes = fread(buffer, 1, BUFFER_SIZE / 2, f);
+                    read_bytes = fread(buffer, 1, BUFFER_SIZE, f);
                     for (int i = 0; i < WINDOW_LEN; i++)
                     {
                         ackMaskWindow[i] = false;
@@ -231,7 +231,7 @@ int main(int argc, char** argv) {
                 }
                 else
                 {
-                    read_bytes = fread(buffer2, 1, BUFFER_SIZE / 2, f);
+                    read_bytes = fread(buffer2, 1, BUFFER_SIZE, f);
                     for (int i = WINDOW_LEN; i < WINDOW_LEN * 2; i++)
                     {
                         ackMaskWindow[i] = false;
