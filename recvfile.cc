@@ -202,14 +202,14 @@ int main(int argc, char** argv) {
         sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
         // if buffer1 is full, write to file, reset buffer1
-        if (++recv_count1 == WINDOW_LEN) {
+        if (recv_count1 == WINDOW_LEN) {
             fwrite(buffer1, 1, BUFFER_SIZE, file);
             memset(buffer1, 0, BUFFER_SIZE);
             recv_count1 = 0;
         }
     
         // if buffer2 is full, write to file, reset buffer2
-        if (++recv_count2 == WINDOW_LEN) {
+        if (recv_count2 == WINDOW_LEN) {
             fwrite(buffer2, 1, BUFFER_SIZE, file);
             memset(buffer2, 0, BUFFER_SIZE);
             recv_count2 = 0;
