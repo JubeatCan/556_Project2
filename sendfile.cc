@@ -316,4 +316,9 @@ int main(int argc, char** argv) {
         }
         window_lock.unlock();
     }
+    fclose(f);
+    free(buffer);
+    free(buffer2);
+    free(frame);
+    free(data);
 }
