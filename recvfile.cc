@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     cout << "Filename done" << endl;
     // Send Ack for filename;
     char ack[ACK_SIZE];
-    cout << seq_num << endl;
+    // cout << seq_num << endl;
     createAck(seq_num, ack);
     // chrono::seconds interval( 1 );
     // for (int i = 0; i < 5; i++) {

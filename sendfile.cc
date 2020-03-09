@@ -33,11 +33,11 @@ void listenFilename(bool *filenameFlag) {
     int ackSize;
     bool error;
     u_short seq_num;
-    cout << "listenAck" << endl;
+    // cout << "listenAck" << endl;
 
     socklen_t size;
     ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_DONTWAIT, (struct sockaddr *)&dest_addr, &size);
-    cout << ackSize << endl;
+    // cout << ackSize << endl;
     if (ackSize <= 0) {
         return;
     }
@@ -159,9 +159,9 @@ int main(int argc, char** argv) {
         sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
 
         listenFilename(&filename_help);
-        cout << "Send" << endl;
+        // cout << "Send" << endl;
     }
-
+    cout << "Filename done" << endl;
     // ackFilename.detach();
 
     // Send file data.
