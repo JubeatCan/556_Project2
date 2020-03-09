@@ -12,7 +12,7 @@
 
 #define WINDOW_LEN 8
 #define SPNUM 2*WINDOW_LEN-1
-#define BUFFER_SIZE 1000000/2
+#define BUFFER_SIZE 1000/2
 #define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
 
 #define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(size_t) + 1
@@ -106,7 +106,7 @@ bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* 
     
     u_short cks_temp;
     memcpy(&cks_temp, frame + 7 + *data_size, 2);
-    
+    cout << "ckm " << ntohs(cks_temp) << " " << checksum((u_short *) frame, (*data_size + 7) / 2) << endl;
     return ntohs(cks_temp) == checksum((u_short *) frame, (*data_size + 7) / 2);
 
 }
@@ -174,7 +174,7 @@ bool parseSend(char** argv, vector<string>& arg) {
 
 int timeElapsed(timeval lhs, timeval rhs)
 {
-    return lhs.tv_sec - rhs.tv_sec;
+    return (lhs.tv_sec - rhs.tv_sec) * 1000 + (lhs.tv_usec - rhs.tv_usec) / 1000;
 }
 
 #endif

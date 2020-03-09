@@ -138,10 +138,10 @@ int main(int argc, char** argv) {
         cout << frame_size << endl;
         // distance btw seq_num and next_frame_expected
         int idx = (seq_num - next_frame_expected + 2 * WINDOW_LEN) % (2 * WINDOW_LEN);
-
+        cout << seq_num << " " << idx << endl;
         // if frame has error or not in current recv_window, drop the frame
         // send ack for last one (or do nothing)
-        if (frame_error || idx >= WINDOW_LEN) {
+        if (!frame_error || idx >= WINDOW_LEN) {
             cout << LAST_ACK << endl;
             createAck(LAST_ACK, ack);
             sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
@@ -203,6 +203,7 @@ int main(int argc, char** argv) {
         sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
         // if buffer1 is full, write to file, reset buffer1
+        cout << "recv_count1: " << recv_count1 << endl;
         if (recv_count1 == WINDOW_LEN) {
             fwrite(buffer1, 1, BUFFER_SIZE, file);
             memset(buffer1, 0, BUFFER_SIZE);
