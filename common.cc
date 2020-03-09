@@ -13,7 +13,7 @@
 #define WINDOW_LEN 8
 #define BUFFER_SIZE 1000000
 #define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
-// Without CRC
+
 #define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(size_t) + 1
 #define ACK_SIZE sizeof(u_short) + sizeof(u_short)
 
@@ -51,10 +51,13 @@ void readFilename(char* frame, bool* error, char* fileName, int* fileNameSize, u
     u_short seq_num;
     memcpy(&seq_num, frame, sizeof(u_short));
     *seqNo = ntohs(seq_num);
+    
     uint32_t size;
     memcpy(&size, frame+2, 4);
     int actual_size = ntohl(size);
+    
     memcpy(fileName, frame+7, actual_size);
+    
     u_short cko;
     memcpy(&cko, frame + 7 + actual_size, 2);
     // cout << actual_size << endl;
@@ -82,6 +85,29 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
     memcpy(frame + data_size + 7, &ck, sizeof(u_short));
     return data_size + 9;
 }
+
+bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* eot) {
+    // TODO: need to check the frame structure again
+
+    u_short seq_num_temp;
+    memcpy(&seq_num, frame, sizeof(u_short));
+    *seq_num = ntohs(seq_num_temp);
+
+    uint32_t net_data_size;
+    memcpy(&net_data_size, frame + 2, 4);
+    *data_size = ntohl(net_data_size);
+
+    *eot = frame[6] == 0x0 ? true: false;
+
+    memcpy(data, frame + 7, *data_size);
+    
+    u_short cks_temp;
+    memcpy(&cks_temp, frame + 7 + *data_size, 2);
+    
+    return ntohs(cks_temp) == checksum((u_short *) frame, (*data_size + 7) / 2);
+
+}
+
 
 void createAck(u_short seq_num, char* ack) {
     u_short nSeq = htons(seq_num);
