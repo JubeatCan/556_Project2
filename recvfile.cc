@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
             createAck(LAST_ACK, ack);
             sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
-            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << data_size << " IGNORED" << endl;
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " " << data_size << " IGNORED" << endl;
             continue;
         }
 
@@ -218,11 +218,11 @@ int main(int argc, char** argv) {
                 recv_done = true;
             }
 
-            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << data_size << " ACCEPTED(in-order)" << endl;
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " " << data_size << " ACCEPTED(in-order)" << endl;
         }
 
         else {
-            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << data_size << " ACCEPTED(out-of-order)" << endl;
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " " << data_size << " ACCEPTED(out-of-order)" << endl;
         }
 
         // send ack
