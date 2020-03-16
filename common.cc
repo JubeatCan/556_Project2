@@ -11,7 +11,7 @@
 #include <sys/time.h>
 
 #define WINDOW_LEN 8
-#define SPNUM 2*WINDOW_LEN-1
+#define SPNUM 0
 #define BUFFER_SIZE 1024/2
 #define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
 

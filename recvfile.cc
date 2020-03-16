@@ -137,6 +137,13 @@ int main(int argc, char** argv) {
         frame_error = readFrame(frame, data, &data_size, &seq_num, &is_last);
         // cout << frame_size << endl;
         // distance btw seq_num and next_frame_expected
+
+        if (seq_num == SPNUM) {
+            createAck(SPNUM, ack);
+            sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+            continue;
+        }
+
         int idx = (seq_num - next_frame_expected + 2 * WINDOW_LEN) % (2 * WINDOW_LEN);
         // cout << seq_num << " " << idx << endl;
         // if frame has error or not in current recv_window, drop the frame
@@ -164,10 +171,6 @@ int main(int argc, char** argv) {
             if (seq_num < WINDOW_LEN) {
                 buffer_shift = seq_num * MAX_DATA_SIZE;
                 memcpy(buffer1 + buffer_shift, data, data_size);
-                // for (int i = 0; i< MAX_DATA_SIZE; i++) {
-                //     cout << (data)[i];
-                // }
-                // cout << endl;
                 recv_count1++;
             }
             else {
