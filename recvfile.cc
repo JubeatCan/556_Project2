@@ -119,6 +119,9 @@ int main(int argc, char** argv) {
     int recv_count1 = 0;    // count how many frame stored in buffer1
     int recv_count2 = 0;    // count how many frame stored in buffer2
 
+    size_t buff_to_write1 = 0;
+    size_t buff_to_wirte2 = 0;
+
     u_short next_frame_expected = 1; // seq_no of next frame expected
     bool recv_done = false;
     bool frame_error;
@@ -163,7 +166,7 @@ int main(int argc, char** argv) {
             createAck(LAST_ACK, ack);
             sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
-            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " " << data_size << " IGNORED" << endl;
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " (" << data_size  << ") " << "IGNORED" << endl;
             continue;
         }
 
@@ -182,11 +185,13 @@ int main(int argc, char** argv) {
             if (buffer_idx < WINDOW_LEN) {
                 buffer_shift = buffer_idx * MAX_DATA_SIZE;
                 memcpy(buffer1 + buffer_shift, data, data_size);
+                buff_to_write1 += data_size;
                 recv_count1++;
             }
             else {
                 buffer_shift = (buffer_idx - WINDOW_LEN) * MAX_DATA_SIZE;
                 memcpy(buffer2 + buffer_shift, data, data_size);
+                buff_to_wirte2 += data_size;
                 recv_count2++;
             }
         }
@@ -218,11 +223,11 @@ int main(int argc, char** argv) {
                 recv_done = true;
             }
 
-            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " " << data_size << " ACCEPTED(in-order)" << endl;
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " (" << data_size << ")" << "ACCEPTED(in-order)" << endl;
         }
 
         else {
-            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " " << data_size << " ACCEPTED(out-of-order)" << endl;
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " (" << data_size << ") "<< "ACCEPTED(out-of-order)" << endl;
         }
 
         // send ack
@@ -233,17 +238,19 @@ int main(int argc, char** argv) {
         // cout << "recv_count1: " << recv_count1 << endl;
         if (recv_count1 == WINDOW_LEN) {
             cout << "write file" << endl;
-            cout << fwrite(buffer1, 1, BUFFER_SIZE, file) << endl;
+            cout << fwrite(buffer1, 1, buff_to_write1, file) << endl;
             fclose(file);
             file = fopen(fileStr.c_str(), "ab");
             memset(buffer1, 0, BUFFER_SIZE);
+            buff_to_write1 = 0;
             recv_count1 = 0;
         }
     
         // if buffer2 is full, write to file, reset buffer2
         if (recv_count2 == WINDOW_LEN) {
-            fwrite(buffer2, 1, BUFFER_SIZE, file);
+            fwrite(buffer2, 1, buff_to_wirte2, file);
             memset(buffer2, 0, BUFFER_SIZE);
+            buff_to_wirte2 = 0;
             recv_count2 = 0;
         }
         
@@ -251,12 +258,11 @@ int main(int argc, char** argv) {
 
     // write remaining buffer to file
     if (recv_count1) {
-        fwrite(buffer1, 1, BUFFER_SIZE, file);
-
+        fwrite(buffer1, 1, buff_to_write1, file);
     }
     
     if (recv_count2) {
-        fwrite(buffer2, 1, BUFFER_SIZE, file);
+        fwrite(buffer2, 1, buff_to_wirte2, file);
     }
 
     fclose(file);
@@ -273,6 +279,8 @@ int main(int argc, char** argv) {
     free(frame);
     free(data);
     free(fileName);
+
+    cout << "[completed]" << endl;
 
     exit(0);
 
