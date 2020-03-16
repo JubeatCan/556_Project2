@@ -236,7 +236,7 @@ int main(int argc, char** argv) {
                     datasize = MAX_DATA_SIZE;
                     eof = false;
                 }
-                memcpy(data, buffer, datasize);
+                memcpy(data, buffer + win_no * MAX_DATA_SIZE, datasize);
                 int frame_size = createFrame(eof, data, frame, datasize, i);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
                 gettimeofday(&currentTime, NULL);
