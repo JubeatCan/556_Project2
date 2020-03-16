@@ -196,7 +196,6 @@ int main(int argc, char** argv) {
 
                 fseek(f, (shift - 1) * MAX_DATA_SIZE, SEEK_SET);
                 int readBytes = fread(buffer, 1, BUFFER_SIZE * 2, f);
-                fseek(f, 0, SEEK_CUR);
 
                 if (feof(f)) {
                     readAll = true;
@@ -211,15 +210,25 @@ int main(int argc, char** argv) {
                 } else {
                     lastFrameNo = old_shift + readBytes / MAX_DATA_SIZE;
                 }
+
+                if (feof(f)) {
+                    cout << readBytes << endl;
+                    cout << old_shift << " " << lastFrameNo << " " << lastPackSize << endl;
+                }
             } else {
                 padding = shift - old_shift;
             }
         }
         window_lock.unlock();
 
-        int current_last = old_shift + padding + WINDOW_LEN - 1;
-        int current_first = old_shift + padding;
+        u_short current_last = old_shift + padding + WINDOW_LEN - 1;
+        u_short current_first = old_shift + padding;
         timeval currentTime;
+        if (lastFrameNo < current_first) {
+            cout << "error" << endl;
+            abort();
+        }
+        // cout << "Starting " << current_first << " last frame " << lastFrameNo << endl;
         //send
         window_lock.lock();
         for (int i = current_first; i <= current_last && i <= lastFrameNo; i++) {

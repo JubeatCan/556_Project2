@@ -12,7 +12,7 @@
 
 #define WINDOW_LEN 8
 #define SPNUM 0
-#define BUFFER_SIZE 1024/2
+#define BUFFER_SIZE 1024 * 8 / 2
 #define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
 
 #define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 2
