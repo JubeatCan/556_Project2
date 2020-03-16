@@ -18,7 +18,8 @@
 #define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 2
 #define ACK_SIZE sizeof(u_short) + sizeof(u_short)
 
-#define LAST_ACK (next_frame_expected - 1 + 2 * WINDOW_LEN) % (2 * WINDOW_LEN)
+// #define LAST_ACK (next_frame_expected - 1 + 2 * WINDOW_LEN) % (2 * WINDOW_LEN)
+#define LAST_ACK next_frame_expected - 1
 
 using namespace std;
 

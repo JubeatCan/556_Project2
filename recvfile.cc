@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
     int recv_count1 = 0;    // count how many frame stored in buffer1
     int recv_count2 = 0;    // count how many frame stored in buffer2
 
-    u_short next_frame_expected = 0; // seq_no of next frame expected
+    u_short next_frame_expected = 1; // seq_no of next frame expected
     bool recv_done = false;
     bool frame_error;
     bool is_last;
@@ -144,12 +144,13 @@ int main(int argc, char** argv) {
             continue;
         }
 
-        int idx = (seq_num - next_frame_expected + 2 * WINDOW_LEN) % (2 * WINDOW_LEN);
+        // int idx = (seq_num - next_frame_expected + 2 * WINDOW_LEN) % (2 * WINDOW_LEN);
+        int idx = seq_num - next_frame_expected;
         // cout << seq_num << " " << idx << endl;
         // if frame has error or not in current recv_window, drop the frame
         // send ack for last one (or do nothing)
         // cout << seq_num << " " << idx << endl;
-        if (!frame_error || idx >= WINDOW_LEN) {
+        if (!frame_error || idx <0 || idx >= WINDOW_LEN) {
             // cout << LAST_ACK << endl;
             createAck(LAST_ACK, ack);
             // cout << LAST_ACK << endl;
@@ -167,14 +168,15 @@ int main(int argc, char** argv) {
         if (!window_recv_mask[idx]) {
             window_recv_mask[idx] = true;
 
+            int buffer_idx = (seq_num - 1) % (2 * WINDOW_LEN);
             size_t buffer_shift;
-            if (seq_num < WINDOW_LEN) {
-                buffer_shift = seq_num * MAX_DATA_SIZE;
+            if (buffer_idx < WINDOW_LEN) {
+                buffer_shift = buffer_idx * MAX_DATA_SIZE;
                 memcpy(buffer1 + buffer_shift, data, data_size);
                 recv_count1++;
             }
             else {
-                buffer_shift = (seq_num - WINDOW_LEN) * MAX_DATA_SIZE;
+                buffer_shift = (buffer_idx - WINDOW_LEN) * MAX_DATA_SIZE;
                 memcpy(buffer2 + buffer_shift, data, data_size);
                 recv_count2++;
             }
@@ -199,7 +201,8 @@ int main(int argc, char** argv) {
             }
             
             // reset next_frame_expected
-            next_frame_expected = (next_frame_expected + window_shift) % (2 * WINDOW_LEN);
+            // next_frame_expected = (next_frame_expected + window_shift) % (2 * WINDOW_LEN);
+            next_frame_expected += window_shift;
             
             // if last frame is in current window, and no more frame need to be received, we are done receive
             if (last_in_window && remain_to_recv == 0) {
