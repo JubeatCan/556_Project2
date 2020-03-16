@@ -201,6 +201,8 @@ int main(int argc, char** argv) {
                 if (feof(f)) {
                     readAll = true;
                     lastPackSize = (readBytes % MAX_DATA_SIZE) == 0 ? MAX_DATA_SIZE : (readBytes % MAX_DATA_SIZE);
+                } else {
+                    lastPackSize = MAX_DATA_SIZE;
                 }
                 if (readBytes == BUFFER_SIZE * 2) {
                     lastFrameNo = old_shift + WINDOW_LEN * 2 - 1;
@@ -227,14 +229,14 @@ int main(int argc, char** argv) {
                 (!ackWindow[win_no] && timeElapsed(currentTime, timeWindow[win_no]) > TIMEOUT)) {
                 bool eof;
                 int datasize;
-                if (i == lastFrameNo) {
+                if (i == lastFrameNo && readAll) {
                     datasize = lastPackSize;
                     eof = true;
                 } else {
                     datasize = MAX_DATA_SIZE;
                     eof = false;
                 }
-                memcpy(data, buffer, datasize);
+                memcpy(data, buffer + win_no * MAX_DATA_SIZE, datasize);
                 int frame_size = createFrame(eof, data, frame, datasize, i);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
                 gettimeofday(&currentTime, NULL);
