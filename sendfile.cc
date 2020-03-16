@@ -80,7 +80,7 @@ void listenAck()
         if (readAll && lastFrameNo == seq_num) {
             sentAll = true;
         }
-
+        // cout << "Ack " << seq_num << endl;
         window_lock.unlock();
     }
 }
@@ -183,9 +183,11 @@ int main(int argc, char** argv) {
 
     while (!sentAll) {
         // Shift window and reset if needed
+        // cout << "-------------------" << endl;
+        // cout << shift << " " << old_shift << endl;
         window_lock.lock();
-        if (shift != old_shift && !readAll) {
-            if (shift - old_shift >= WINDOW_LEN || old_shift == 0) {
+        if (shift != old_shift) {
+            if ((shift - old_shift >= WINDOW_LEN || old_shift == 0) && !readAll) {
                 for (int i = 0; i < WINDOW_LEN * 2; i++) {
                     ackWindow[i] = false;
                     timeWindow[i] = initialTime;
@@ -199,7 +201,8 @@ int main(int argc, char** argv) {
 
                 if (feof(f)) {
                     readAll = true;
-                    lastPackSize = (readBytes % MAX_DATA_SIZE) == 0 ? MAX_DATA_SIZE : (readBytes % MAX_DATA_SIZE);
+                    lastPackSize = ((readBytes % MAX_DATA_SIZE) == 0 ? MAX_DATA_SIZE : (readBytes % MAX_DATA_SIZE));
+                    // cout << MAX_DATA_SIZE << " " << readBytes << " " << lastPackSize << endl;
                 } else {
                     lastPackSize = MAX_DATA_SIZE;
                 }
@@ -211,16 +214,22 @@ int main(int argc, char** argv) {
                     lastFrameNo = old_shift + readBytes / MAX_DATA_SIZE;
                 }
 
-                if (feof(f)) {
-                    cout << readBytes << endl;
-                    cout << old_shift << " " << lastFrameNo << " " << lastPackSize << endl;
-                }
+                // if (feof(f)) {
+                //     cout<< "--------------------------------" << endl;
+                //     cout << readBytes << endl;
+                //     cout << old_shift << " " << lastFrameNo << " " << lastPackSize << endl;
+                //     cout << "-------------------------------" << endl;
+                // }
             } else {
                 padding = shift - old_shift;
             }
         }
         window_lock.unlock();
 
+        if (readAll && lastFrameNo == shift - 1) {
+            sentAll = true;
+            continue;
+        }
         u_short current_last = old_shift + padding + WINDOW_LEN - 1;
         u_short current_first = old_shift + padding;
         timeval currentTime;
@@ -236,16 +245,19 @@ int main(int argc, char** argv) {
             gettimeofday(&currentTime, NULL);
             if (!sentWindow[win_no] || timeWindow[win_no].tv_sec == -1 || 
                 (!ackWindow[win_no] && timeElapsed(currentTime, timeWindow[win_no]) > TIMEOUT)) {
+                    // cout << "send " << i << endl;
                 bool eof;
                 int datasize;
                 if (i == lastFrameNo && readAll) {
                     datasize = lastPackSize;
                     eof = true;
+                    // cout << "send Final packet" << endl;
                 } else {
                     datasize = MAX_DATA_SIZE;
                     eof = false;
                 }
                 memcpy(data, buffer + win_no * MAX_DATA_SIZE, datasize);
+                cout << "[send data] " << (i-1) * MAX_DATA_SIZE << " (" << datasize << ")" << endl;
                 int frame_size = createFrame(eof, data, frame, datasize, i);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
                 gettimeofday(&currentTime, NULL);
@@ -262,185 +274,7 @@ int main(int argc, char** argv) {
     free(frame);
     free(data);
 
-    // ackFilename.detach();
-
-    // Send file data.
-    
-    // window_lock.lock();
-    // // initialize sliding window
-    // struct timeval initialTime = {-1, -1};
-    // for (int i = 0; i < WINDOW_LEN * 2; i++)
-    // {
-    //     ackMaskWindow[i] = false;
-    //     sentMaskWindow[i] = false;
-    //     timeWindow[i] = initialTime;
-    // }
-    // window_lock.unlock();
-
-    // // TODO: file is small and two buffer has read all.
-    // int read_bytes = fread(buffer, 1, BUFFER_SIZE, f);
-    // // set to the next file location
-    // fseek(f, 0, SEEK_CUR);
-    // fread(buffer2, 1, BUFFER_SIZE, f);
-    // fseek(f, 0, SEEK_CUR);
-
-    // bool hasReadAll = false;
-    // // bool hasSentAll = false;
-    // thread ackRecv(listenAck);
-    // while(true)
-    // {
-    //     int shift = 0;
-    //     // slide window if necessary
-    //     int start = isBuffer1Low ? 0 : WINDOW_LEN;
-    //     if(ackMaskWindow[start])
-    //     {
-    //         for (int i = start; i < start + WINDOW_LEN; i++)
-    //         {
-    //             if(!ackMaskWindow[i])
-    //                 break;
-    //             else
-    //             {
-    //                 sentMaskWindow[shift] = true;
-    //             }
-    //             shift++;
-    //         }
-    //     }
-    //     // cout << shift << endl;
-    //     // end the while if all frames has been acked
-    //     if(hasReadAll && shift == WINDOW_LEN)
-    //     {
-    //         break;
-    //     }
-
-    //     // lowerhalf has been acked. read new data in
-    //     if(shift >= WINDOW_LEN)
-    //     {
-    //         if(!hasReadAll)
-    //         {
-    //             window_lock.lock();
-
-    //             if(isBuffer1Low)
-    //             {
-    //                 read_bytes = fread(buffer, 1, BUFFER_SIZE, f);
-    //                 for (int i = 0; i < WINDOW_LEN; i++)
-    //                 {
-    //                     ackMaskWindow[i] = false;
-    //                     sentMaskWindow[i] = false;
-    //                     timeWindow[i] = initialTime;
-    //                 }
-    //             }
-    //             else
-    //             {
-    //                 read_bytes = fread(buffer2, 1, BUFFER_SIZE, f);
-    //                 for (int i = WINDOW_LEN; i < WINDOW_LEN * 2; i++)
-    //                 {
-    //                     ackMaskWindow[i] = false;
-    //                     sentMaskWindow[i] = false;
-    //                     timeWindow[i] = initialTime;
-    //                 }
-    //             }
-
-    //             window_lock.unlock();
-    //             isBuffer1Low = !isBuffer1Low;
-    //             fseek(f, 0, SEEK_CUR);
-
-    //             if(feof(f))
-    //             {
-    //                 hasReadAll = true;
-    //             }
-    //             low = shift % WINDOW_LEN;
-    //             high = low;
-    //         }
-    //         else
-    //         {
-    //             // window reaches the end of data, no need to shift high
-    //             low = shift % WINDOW_LEN;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         low = shift % WINDOW_LEN;
-    //         high = low;
-    //     }
-        
-    //     int dataSize, offset;
-    //     ushort seq_no;
-    //     timeval currentTime;
-
-    //     window_lock.lock();
-    //     // send frames
-    //     for (int i = low; i < WINDOW_LEN; i++)
-    //     {
-    //         gettimeofday(&currentTime, NULL);
-    //         if(!sentMaskWindow[i] || timeWindow[i].tv_sec == -1 ||
-    //             (!ackMaskWindow[i] && timeElapsed(currentTime, timeWindow[i]) > TIMEOUT))
-    //         {
-    //             // calculate seq_no
-    //             seq_no = isBuffer1Low ? i : (i + WINDOW_LEN);
-                
-    //             offset = i * MAX_DATA_SIZE;
-    //             bool eof = false;
-    //             if(read_bytes - offset < MAX_DATA_SIZE)
-    //             {
-    //                 dataSize = read_bytes - offset;
-    //                 eof = true;
-    //             }
-    //             else
-    //             {
-    //                 dataSize = MAX_DATA_SIZE;
-    //             }
-    //             // dataSize = (read_bytes - offset < MAX_DATA_SIZE) ? (read_bytes - offset) : MAX_DATA_SIZE;
-
-    //             char* tempBufferPtr = isBuffer1Low ? buffer : buffer2;
-    //             memcpy(data, tempBufferPtr + offset, dataSize);
-                
-    //             int frame_size = createFrame(eof, data, frame, dataSize, seq_no);
-    //             sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
-    //             // cout << "send data" << endl;
-    //             gettimeofday(&currentTime, NULL);
-    //             timeWindow[seq_no] = currentTime;
-    //             sentMaskWindow[seq_no] = true;
-    //         }
-    //     }
-    //     for (int i = 0; i < high; i++)
-    //     {
-    //         gettimeofday(&currentTime, NULL);
-    //         if(!sentMaskWindow[i] || timeWindow[i].tv_sec == -1 ||
-    //             (!ackMaskWindow[i] && timeElapsed(currentTime, timeWindow[i]) > TIMEOUT))
-    //         {
-    //             // calculate seq_no
-    //             seq_no = isBuffer1Low ? (i + WINDOW_LEN) : i;
-
-    //             offset = i * MAX_DATA_SIZE;
-    //             bool eof = false;
-    //             if(read_bytes - offset < MAX_DATA_SIZE)
-    //             {
-    //                 dataSize = read_bytes - offset;
-    //                 eof = true;
-    //             }
-    //             else
-    //             {
-    //                 dataSize = MAX_DATA_SIZE;
-    //             }
-
-    //             char* tempBufferPtr = isBuffer1Low ? buffer2 : buffer;
-    //             memcpy(data, tempBufferPtr + offset, dataSize);
-                
-    //             int frame_size = createFrame(eof, data, frame, dataSize, seq_no);
-    //             sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
-    //             gettimeofday(&currentTime, NULL);
-    //             timeWindow[seq_no] = currentTime;
-    //             sentMaskWindow[seq_no] = true;
-    //         }
-    //     }
-    //     window_lock.unlock();
-    // }
-    // ackRecv.detach();
-    // fclose(f);
-    // free(buffer);
-    // free(buffer2);
-    // free(frame);
-    // free(data);
+    cout << "[completed]" << endl;
 
     return 0;
 }
