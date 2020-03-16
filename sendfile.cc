@@ -22,7 +22,7 @@ struct sockaddr_in dest_addr, client_addr;
 
 mutex window_lock;
 
-const int TIMEOUT = 100000000;
+const int TIMEOUT = 1000;
 timeval timeWindow[WINDOW_LEN * 2];
 bool ackWindow[WINDOW_LEN * 2];
 bool sentWindow[WINDOW_LEN * 2];
