@@ -80,7 +80,7 @@ void listenAck()
         if (readAll && lastFrameNo == seq_num) {
             sentAll = true;
         }
-
+        cout << "Ack " << seq_num << endl;
         window_lock.unlock();
     }
 }
@@ -183,9 +183,11 @@ int main(int argc, char** argv) {
 
     while (!sentAll) {
         // Shift window and reset if needed
+        // cout << "-------------------" << endl;
+        // cout << shift << " " << old_shift << endl;
         window_lock.lock();
-        if (shift != old_shift && !readAll) {
-            if (shift - old_shift >= WINDOW_LEN || old_shift == 0) {
+        if (shift != old_shift) {
+            if ((shift - old_shift >= WINDOW_LEN || old_shift == 0) && !readAll) {
                 for (int i = 0; i < WINDOW_LEN * 2; i++) {
                     ackWindow[i] = false;
                     timeWindow[i] = initialTime;
@@ -199,7 +201,8 @@ int main(int argc, char** argv) {
 
                 if (feof(f)) {
                     readAll = true;
-                    lastPackSize = (readBytes % MAX_DATA_SIZE) == 0 ? MAX_DATA_SIZE : (readBytes % MAX_DATA_SIZE);
+                    lastPackSize = ((readBytes % MAX_DATA_SIZE) == 0 ? MAX_DATA_SIZE : (readBytes % MAX_DATA_SIZE));
+                    cout << MAX_DATA_SIZE << " " << readBytes << " " << lastPackSize << endl;
                 } else {
                     lastPackSize = MAX_DATA_SIZE;
                 }
@@ -212,8 +215,10 @@ int main(int argc, char** argv) {
                 }
 
                 if (feof(f)) {
+                    cout<< "--------------------------------" << endl;
                     cout << readBytes << endl;
                     cout << old_shift << " " << lastFrameNo << " " << lastPackSize << endl;
+                    cout << "-------------------------------" << endl;
                 }
             } else {
                 padding = shift - old_shift;
@@ -236,16 +241,22 @@ int main(int argc, char** argv) {
             gettimeofday(&currentTime, NULL);
             if (!sentWindow[win_no] || timeWindow[win_no].tv_sec == -1 || 
                 (!ackWindow[win_no] && timeElapsed(currentTime, timeWindow[win_no]) > TIMEOUT)) {
+                    cout << "send " << i << endl;
                 bool eof;
                 int datasize;
                 if (i == lastFrameNo && readAll) {
                     datasize = lastPackSize;
                     eof = true;
+                    cout << "send Final packet" << endl;
                 } else {
                     datasize = MAX_DATA_SIZE;
                     eof = false;
                 }
                 memcpy(data, buffer + win_no * MAX_DATA_SIZE, datasize);
+                // for (int j = 0; j < datasize; j++) {
+                //     cout << data[j];
+                // }
+                // cout << datasize << endl;
                 int frame_size = createFrame(eof, data, frame, datasize, i);
                 sendto(socket_fd, frame, frame_size, 0, (const struct sockaddr *) &dest_addr, sizeof(dest_addr));
                 gettimeofday(&currentTime, NULL);

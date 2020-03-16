@@ -10,16 +10,16 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 
-#define WINDOW_LEN 8
-#define SPNUM 0
-#define BUFFER_SIZE 1024 * 8 / 2
-#define MAX_DATA_SIZE BUFFER_SIZE/WINDOW_LEN
+#define WINDOW_LEN (8)
+#define SPNUM (0)
+#define BUFFER_SIZE (1024 * 8 / 2)
+#define MAX_DATA_SIZE (BUFFER_SIZE/WINDOW_LEN)
 
-#define MAX_FRAME_SIZE MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 2
-#define ACK_SIZE sizeof(u_short) + sizeof(u_short)
+#define MAX_FRAME_SIZE (MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 2)
+#define ACK_SIZE (sizeof(u_short) + sizeof(u_short))
 
 // #define LAST_ACK (next_frame_expected - 1 + 2 * WINDOW_LEN) % (2 * WINDOW_LEN)
-#define LAST_ACK next_frame_expected - 1
+#define LAST_ACK (next_frame_expected - 1)
 
 using namespace std;
 

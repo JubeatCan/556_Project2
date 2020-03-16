@@ -170,7 +170,8 @@ int main(int argc, char** argv) {
         // if it is the last frame, count how many frames need to recv to close the window
         if (is_last) {
             last_in_window = true;
-            remain_to_recv = idx + 1; 
+            remain_to_recv = idx + 1;
+            cout << seq_num << endl; 
         }
 
         // mask it as received if not, copy data to corresponding buffer
