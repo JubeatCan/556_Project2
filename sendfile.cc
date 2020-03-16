@@ -22,7 +22,7 @@ struct sockaddr_in dest_addr, client_addr;
 
 mutex window_lock;
 
-const int TIMEOUT = 1000;
+const int TIMEOUT = 100000000;
 timeval timeWindow[WINDOW_LEN * 2];
 bool ackWindow[WINDOW_LEN * 2];
 bool sentWindow[WINDOW_LEN * 2];
@@ -151,7 +151,6 @@ int main(int argc, char** argv) {
     const char* filename = arg[1].c_str();
     char *buffer, *frame, *data, *buffer2;
     buffer = (char *)malloc(BUFFER_SIZE * 2);
-    // buffer2 = (char *)malloc(BUFFER_SIZE);
     frame = (char *)malloc(MAX_FRAME_SIZE);
     data = (char *)malloc(MAX_DATA_SIZE);
     if (!buffer || !frame || !data) {
@@ -239,7 +238,6 @@ int main(int argc, char** argv) {
         }
         // cout << "Starting " << current_first << " last frame " << lastFrameNo << endl;
         //send
-        window_lock.lock();
         for (int i = current_first; i <= current_last && i <= lastFrameNo; i++) {
             int win_no = i - old_shift;
             gettimeofday(&currentTime, NULL);
@@ -265,7 +263,6 @@ int main(int argc, char** argv) {
                 sentWindow[win_no] = true;
             }
         }
-        window_lock.unlock();
     }
 
     ackRecv.detach();
