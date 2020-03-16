@@ -113,8 +113,8 @@ int main(int argc, char** argv) {
 
 
     /* receive frames until the last one */
-    char * buffer1 = (char *) malloc(BUFFER_SIZE);  // seq_no [0 : WINDOW_LEN - 1] store here
-    char * buffer2 = (char *) malloc(BUFFER_SIZE);  // seq_no [WINDOW_LEN : WINDOW_LEN * 2 - 1] store here
+    char * buffer1 = (char *) malloc(BUFFER_SIZE);  // store first half: seq_no - 1 [0 : WINDOW_LEN - 1]
+    char * buffer2 = (char *) malloc(BUFFER_SIZE);  // store last half: seq_no - 1 [WINDOW_LEN : WINDOW_LEN * 2 - 1]
 
     int recv_count1 = 0;    // count how many frame stored in buffer1
     int recv_count2 = 0;    // count how many frame stored in buffer2
@@ -136,7 +136,6 @@ int main(int argc, char** argv) {
         frame_size = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, &size);
         frame_error = readFrame(frame, data, &data_size, &seq_num, &is_last);
         // cout << frame_size << endl;
-        // distance btw seq_num and next_frame_expected
 
         if (seq_num == SPNUM) {
             createAck(SPNUM, ack);
@@ -144,17 +143,27 @@ int main(int argc, char** argv) {
             continue;
         }
 
+        // distance btw seq_num and next_frame_expected
         // int idx = (seq_num - next_frame_expected + 2 * WINDOW_LEN) % (2 * WINDOW_LEN);
         int idx = seq_num - next_frame_expected;
         // cout << seq_num << " " << idx << endl;
         // if frame has error or not in current recv_window, drop the frame
         // send ack for last one (or do nothing)
         // cout << seq_num << " " << idx << endl;
-        if (!frame_error || idx <0 || idx >= WINDOW_LEN) {
-            // cout << LAST_ACK << endl;
+
+        if (!frame_error) {
             createAck(LAST_ACK, ack);
-            // cout << LAST_ACK << endl;
             sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+
+            cout << "[recv corrupt packet]" << endl;
+            continue;
+        }
+
+        if (idx < 0 || idx >= WINDOW_LEN) {
+            createAck(LAST_ACK, ack);
+            sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
+
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << MAX_DATA_SIZE << " IGNORED" << endl;
             continue;
         }
 
