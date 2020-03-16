@@ -38,11 +38,9 @@ void listenFilename(bool *filenameFlag) {
     int ackSize;
     bool error;
     u_short seq_num;
-    // cout << "listenAck" << endl;
 
     socklen_t size;
     ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_DONTWAIT, (struct sockaddr *)&dest_addr, &size);
-    // cout << ackSize << endl;
     if (ackSize <= 0) {
         return;
     }
@@ -65,7 +63,6 @@ void listenAck()
         socklen_t size;
         ackSize = recvfrom(socket_fd, (char *)ack, ACK_SIZE, MSG_WAITALL, (struct sockaddr *) &dest_addr, &size);
         readAck(ack, &error, &seq_num);
-        // cout << seq_num << endl;
         window_lock.lock();
 
         if(!error && seq_num != 0 && seq_num >= shift)
@@ -80,7 +77,6 @@ void listenAck()
         if (readAll && lastFrameNo == seq_num) {
             sentAll = true;
         }
-        // cout << "Ack " << seq_num << endl;
         window_lock.unlock();
     }
 }
@@ -160,7 +156,6 @@ int main(int argc, char** argv) {
 
     // Send filename first.
     bool filename_sent = false;
-    // thread ackFilename(listenFilename, &filename_sent);
     bool filename_help = filename_sent;
     while (!filename_help) {
         int data_size = arg[1].length() + 1;
@@ -182,8 +177,7 @@ int main(int argc, char** argv) {
 
     while (!sentAll) {
         // Shift window and reset if needed
-        // cout << "-------------------" << endl;
-        // cout << shift << " " << old_shift << endl;
+        
         window_lock.lock();
         if (shift != old_shift) {
             if ((shift - old_shift >= WINDOW_LEN || old_shift == 0) && !readAll) {
@@ -201,7 +195,6 @@ int main(int argc, char** argv) {
                 if (feof(f)) {
                     readAll = true;
                     lastPackSize = ((readBytes % MAX_DATA_SIZE) == 0 ? MAX_DATA_SIZE : (readBytes % MAX_DATA_SIZE));
-                    // cout << MAX_DATA_SIZE << " " << readBytes << " " << lastPackSize << endl;
                 } else {
                     lastPackSize = MAX_DATA_SIZE;
                 }
@@ -236,20 +229,17 @@ int main(int argc, char** argv) {
             cout << "error" << endl;
             abort();
         }
-        // cout << "Starting " << current_first << " last frame " << lastFrameNo << endl;
         //send
         for (int i = current_first; i <= current_last && i <= lastFrameNo; i++) {
             int win_no = i - old_shift;
             gettimeofday(&currentTime, NULL);
             if (!sentWindow[win_no] || timeWindow[win_no].tv_sec == -1 || 
                 (!ackWindow[win_no] && timeElapsed(currentTime, timeWindow[win_no]) > TIMEOUT)) {
-                    // cout << "send " << i << endl;
                 bool eof;
                 int datasize;
                 if (i == lastFrameNo && readAll) {
                     datasize = lastPackSize;
                     eof = true;
-                    // cout << "send Final packet" << endl;
                 } else {
                     datasize = MAX_DATA_SIZE;
                     eof = false;
