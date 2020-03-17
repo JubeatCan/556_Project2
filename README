@@ -1,0 +1,62 @@
+### Team members:
+Can Sun,
+Junjie Zhao,
+Ying Zhou
+
+### How to:
+
+```
+make
+
+Usage for recvfile:
+recvfile -p <recv port>
+<recv port> (Required) The UDP port to listen on.
+
+Usage for sendfile:
+sendfile -r <recv host>:<recv port> -f <subdir>/<filename>
+<recv host> (Required) The IP address of the remote host in a.b.c.d format.
+<recv port> (Required) The UDP port of the remote host.
+<subdir> (Required) The local subdirectory where the ﬁle is located.
+<filename> (Required) The name of the ﬁle to be sent.
+
+Example:
+./sendfile -r pyrite.clear.rice.edu:18001 -f test1/test2/numbers.txt
+./recvfile -p 18001
+
+```
+
+### Packet format:
+
+#### Data Frame:
+sequence number | data size | eof | data       | checksum
+u_short         | uint32_t  | 2B  | datasize B | u_short
+
+#### Ack:
+sequence number | checksum
+u_short         | u_short
+
+### Protocols:
+UDP
+
+### Algorithm:
+Sliding window with checksum.
+
+```
+WINDOW_LEN (8 * 2)
+BUFFER_SIZE is the whole data buffer (1024 * 8 * 128 / 2)
+MAX_DATA_SIZE in one frame (BUFFER_SIZE/WINDOW_LEN) is 32768
+```
+
+### FEATURE:
+
+1. We use the only-increasing sequence number to make sure the reliability. The limit of unsigned short can ensure the MAX file size to be slightly over 30MB.
+
+2. We use the sequence number 0 as a special one to only tranfer the filename first for the receiver to be able to touch the new location first.
+
+3. We use one additional thread in the sender to process the ack receiving and update the window accordingly.
+
+4. To limit the IO in the disk, we suck 2 window length buffer at once. Only when the first window is finished, we will create another 2 window buffer.
+
+5. We omit the pack to send, which has been acked, or not exceeds its own timeout to ensure the speed of the sender.
+
+6. In the receiver, we also implement such algorithm to only access the disk when the whole buffer is fulfilled with correct data.
