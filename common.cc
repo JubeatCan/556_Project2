@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 
-#define WINDOW_LEN (8 * 128)
+#define WINDOW_LEN (8 * 2)
 #define SPNUM (0)
 #define BUFFER_SIZE (1024 * 8 * 128 / 2)
 #define MAX_DATA_SIZE (BUFFER_SIZE/WINDOW_LEN)
