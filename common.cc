@@ -18,7 +18,6 @@
 #define MAX_FRAME_SIZE (MAX_DATA_SIZE + sizeof(u_short) + sizeof(u_short) + sizeof(uint32_t) + 2)
 #define ACK_SIZE (sizeof(u_short) + sizeof(u_short))
 
-// #define LAST_ACK (next_frame_expected - 1 + 2 * WINDOW_LEN) % (2 * WINDOW_LEN)
 #define LAST_ACK (next_frame_expected - 1)
 
 using namespace std;
@@ -39,11 +38,9 @@ void readAck(char* ack, bool* error, u_short* seq_num) {
     u_short n_seqNo;
     memcpy(&n_seqNo, ack, 2);
     *seq_num = ntohs(n_seqNo);
-    // cout << *seq_num << " " << n_seqNo << endl;
     u_short ck = checksum((u_short *)ack, 2/2);
     u_short cko;
     memcpy(&cko, ack+2, 2);
-    // cout << ck << " " << ntohs(cko) << endl;
     if (ck != ntohs(cko)) {
         *error = true;
     } else {
@@ -64,9 +61,7 @@ void readFilename(char* frame, bool* error, char* fileName, int* fileNameSize, u
     
     u_short cko;
     memcpy(&cko, frame + 8 + actual_size, 2);
-    // cout << actual_size << endl;
-    // cout << ntohs(cko) << endl;
-    // cout << checksum((u_short *)frame, (actual_size + 7)/2) << endl << endl;
+
     if (checksum((u_short *)frame, (actual_size + 8)/2) == ntohs(cko) && *seqNo == SPNUM) {
         *error = false;
         *fileNameSize = actual_size;
@@ -84,19 +79,12 @@ int createFrame(bool eof, char* data, char* frame, int data_size, u_short seq_no
     frame[7] = eof ? 0x0:0x1;
     memcpy(frame + 8, data, data_size);
     u_short ck = htons(checksum((u_short *)frame, (data_size + 8)/2));
-    // cout << ntohs(ck) << endl;
-    // cout << ntohl(n_dataSize) << endl << endl;
-    // frame[data_size + 6] = checksum((u_short *)frame, data_size + 6);
+
     memcpy(frame + data_size + 8, &ck, sizeof(u_short));
     return data_size + 10;
 }
 
 bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* eot) {
-    // TODO: need to check the frame structure again
-    // for (int i = 0; i< MAX_FRAME_SIZE; i++) {
-    //     cout << frame[i];
-    // }
-    // cout << endl;
 
     u_short seq_num_temp;
     memcpy(&seq_num_temp, frame, sizeof(u_short));
@@ -113,7 +101,6 @@ bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* 
     
     u_short cks_temp;
     memcpy(&cks_temp, frame + 8 + *data_size, 2);
-    // cout << "ckm " << ntohs(cks_temp) << " " << checksum((u_short *) frame, (*data_size + 7) / 2) << endl;
     return ntohs(cks_temp) == checksum((u_short *) frame, (*data_size + 8) / 2);
 
 }
@@ -121,7 +108,6 @@ bool readFrame(char* frame, char* data, int* data_size, u_short* seq_num, bool* 
 
 void createAck(u_short seq_num, char* ack) {
     u_short nSeq = htons(seq_num);
-    // cout << seq_num << endl;
     memcpy(ack, &nSeq, 2);
     u_short ck = htons(checksum((u_short *)ack, 2/2));
     memcpy(ack + 2, &ck, 2);

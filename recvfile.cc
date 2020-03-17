@@ -71,31 +71,17 @@ int main(int argc, char** argv) {
     socklen_t size = sizeof(client_addr);
     while (true) {
         filename_size = 0;
-        cout << "receiving" << endl;
         frame_size = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, &size);
         readFilename(frame, &filename_error, fileName, &filename_size, &seq_num);
-        // cout << frameSize << endl;
         if (!filename_error && filename_size) {
             break;
         }
     }
-    cout << "Filename done" << endl;
-    // Send Ack for filename;
+
+    // Send Ack for filename
     char ack[ACK_SIZE];
-    // cout << seq_num << endl;
     createAck(seq_num, ack);
-    // chrono::seconds interval( 1 );
-    // for (int i = 0; i < 5; i++) {
-    //     int s;
-    //     socklen_t l = sizeof(client_addr);
-    //     s = sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    //     this_thread::sleep_for(interval);
-    // }
     sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
-    // sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
     string fileStr(fileName);
     fileStr += ".recv";
@@ -138,7 +124,6 @@ int main(int argc, char** argv) {
 
         frame_size = recvfrom(socket_fd, frame, MAX_FRAME_SIZE, MSG_WAITALL, (struct sockaddr *) &client_addr, &size);
         frame_error = readFrame(frame, data, &data_size, &seq_num, &is_last);
-        // cout << frame_size << endl;
 
         if (seq_num == SPNUM) {
             createAck(SPNUM, ack);
@@ -147,13 +132,10 @@ int main(int argc, char** argv) {
         }
 
         // distance btw seq_num and next_frame_expected
-        // int idx = (seq_num - next_frame_expected + 2 * WINDOW_LEN) % (2 * WINDOW_LEN);
         int idx = seq_num - next_frame_expected;
-        // cout << seq_num << " " << idx << endl;
-        // if frame has error or not in current recv_window, drop the frame
-        // send ack for last one (or do nothing)
-        // cout << seq_num << " " << idx << endl;
 
+        // if frame has error or not in current recv_window, drop the frame
+        // send ack for last one
         if (!frame_error) {
             createAck(LAST_ACK, ack);
             sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
@@ -216,7 +198,6 @@ int main(int argc, char** argv) {
             }
             
             // reset next_frame_expected
-            // next_frame_expected = (next_frame_expected + window_shift) % (2 * WINDOW_LEN);
             next_frame_expected += window_shift;
             
             // if last frame is in current window, and no more frame need to be received, we are done receive
@@ -224,7 +205,7 @@ int main(int argc, char** argv) {
                 recv_done = true;
             }
 
-            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " (" << data_size << ")" << "ACCEPTED(in-order)" << endl;
+            cout << "[recv data] " << (seq_num - 1) * MAX_DATA_SIZE << " (" << data_size << ") " << "ACCEPTED(in-order)" << endl;
         }
 
         else {
@@ -236,12 +217,8 @@ int main(int argc, char** argv) {
         sendto(socket_fd, ack, ACK_SIZE, 0, (const struct sockaddr *) &client_addr, size);
 
         // if buffer1 is full, write to file, reset buffer1
-        // cout << "recv_count1: " << recv_count1 << endl;
         if (recv_count1 == WINDOW_LEN) {
-            cout << "write file" << endl;
-            cout << fwrite(buffer1, 1, buff_to_write1, file) << endl;
-            fclose(file);
-            file = fopen(fileStr.c_str(), "ab");
+            fwrite(buffer1, 1, buff_to_write1, file);
             memset(buffer1, 0, BUFFER_SIZE);
             buff_to_write1 = 0;
             recv_count1 = 0;
